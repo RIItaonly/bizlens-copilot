@@ -18,3 +18,8 @@ Thumbs.db
 
 # 运行产物
 *.log
+
+# 本地临时
+.edge-profile*/
+.edge-ui/
+docs/assets/*.tmp
