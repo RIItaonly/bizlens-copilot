@@ -289,6 +289,24 @@ def _report(layer, q):
 
 
 # ------------------------------------------------------------------ entry
+_METRIC_TABLES = None
+
+
+def _metric_tables():
+    """指标 → 源表映射，只读一次。"""
+    global _METRIC_TABLES
+    if _METRIC_TABLES is None:
+        import os
+
+        from common import yamlish
+
+        path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            "data", "metrics.yaml")
+        doc = yamlish.loads(open(path, encoding="utf-8").read())
+        _METRIC_TABLES = {m["id"]: (m.get("source_tables") or []) for m in doc["metrics"]}
+    return _METRIC_TABLES
+
+
 def ask(layer, question: str) -> Answer:
     kind = classify(question)
     if kind == "filter":
@@ -302,12 +320,7 @@ def ask(layer, question: str) -> Answer:
 
     p = router.plan(question)
     data = router.execute(layer, p)
-    from common import yamlish
-    import os
-    doc = yamlish.loads(open(os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "data", "metrics.yaml"), encoding="utf-8").read())
-    tables = {m["id"]: (m.get("source_tables") or []) for m in doc["metrics"]}
+    tables = _metric_tables()
     cites = [f"metric:{p.metric}"] + [f"table:{t}" for t in tables.get(p.metric, [])]
     return Answer("table" if isinstance(data, list) else "value", data, cites=cites,
                   sql=layer.last_sql)
