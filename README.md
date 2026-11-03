@@ -47,6 +47,16 @@ python src/eval_runner.py        # 跑全量评测
 
 只依赖 Python 标准库和 pandas。不需要 API Key，不联网。
 
+## 界面
+
+启动 `python src/demo_server.py` 后打开的页面。左侧是分组示例问题，中间是问答区。
+
+<img src="docs/assets/demo.png" width="900" alt="界面总览">
+
+回答是卡片式的：表格里的负数标红，底部可以切换引用清单和原始 SQL。
+
+<img src="docs/assets/answer.png" width="900" alt="答案与引用">
+
 ## 架构
 
 ```mermaid
