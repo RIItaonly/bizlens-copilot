@@ -1,0 +1,20 @@
+# 本地过程文件，不发布
+chatgpt的方案.pdf
+_meta/
+lieflat-less-ai-tone-main/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 运行产物
+*.log
