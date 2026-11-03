@@ -1,0 +1,91 @@
+# 改写鲁棒性测试集 v1
+# 目的：同一批问题，换一种说法，看规则路由器还能不能答对。
+# 用法：python src/eval_runner.py eval/paraphrase_v1.yaml --split paraphrase --tag 改写测试
+# 说明：每题通过 base 复用原题的 ground truth，答案不变，只有问法变。
+# 这不是为了"证明系统不行"，而是为了量化"还差多少才敢说听懂了人话"。
+
+meta:
+  count: 10
+  version: "1.0.0"
+  split: paraphrase
+
+tasks:
+  - id: "P-01"
+    category: "T1"
+    split: "paraphrase"
+    base: "T1-001"
+    difficulty: "easy"
+    question: "华东区 2025 年第四季度确认的收入有多少？"
+    notes: "用“第四季度”代替 Q4。"
+
+  - id: "P-02"
+    category: "T1"
+    split: "paraphrase"
+    base: "T1-002"
+    difficulty: "easy"
+    question: "公司 2025 年一共确认了多少收入？"
+    notes: "省略“全年”，用“一共”。"
+
+  - id: "P-03"
+    category: "T1"
+    split: "paraphrase"
+    base: "T1-003"
+    difficulty: "easy"
+    question: "2025 年 Q4 华南有多少在职员工？"
+    notes: "用“在职员工”代替“期末在职人数”。"
+
+  - id: "P-04"
+    category: "T1"
+    split: "paraphrase"
+    base: "T1-004"
+    difficulty: "medium"
+    question: "2025 年第四季度新签了多少合同额？"
+    notes: "用“第四季度”代替 Q4。"
+
+  - id: "P-05"
+    category: "T2"
+    split: "paraphrase"
+    base: "T2-001"
+    difficulty: "medium"
+    question: "2025 年 Q4 毛利率最低的五个项目是哪些？"
+    notes: "用中文数字“五”代替阿拉伯数字 5。"
+
+  - id: "P-06"
+    category: "T2"
+    split: "paraphrase"
+    base: "T2-002"
+    difficulty: "medium"
+    question: "2025 年收入排名前三的项目是哪些？"
+    notes: "用“排名前三”代替“最高的 3 个”。"
+
+  - id: "P-07"
+    category: "T2"
+    split: "paraphrase"
+    base: "T2-003"
+    difficulty: "hard"
+    question: "2025 年哪些项目回款率最差？给我前三名。"
+    notes: "用“最差”代替“最低”。"
+
+  - id: "P-08"
+    category: "T1"
+    split: "paraphrase"
+    base: "T1-005"
+    difficulty: "easy"
+    question: "P-127 这个项目 Q4 做了多少收入？"
+    notes: "口语化，指代不变。"
+
+  - id: "P-09"
+    category: "T2"
+    split: "paraphrase"
+    base: "T2-006"
+    difficulty: "medium"
+    question: "2025 年 Q4 成本最高的五个项目。"
+    notes: "中文数字 + 省略“是哪些”。"
+
+  - id: "P-10"
+    category: "T2"
+    split: "paraphrase"
+    base: "T2-009"
+    difficulty: "medium"
+    question: "去年全年毛利率最高的 3 个项目是哪些？"
+    notes: "用“去年”代替“2025 年”。"

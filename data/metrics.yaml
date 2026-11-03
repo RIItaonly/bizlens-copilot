@@ -1,0 +1,241 @@
+# 指标口径表（Metrics Semantic Layer）
+# ---------------------------------------------------------------
+# 这是 BizLens 的"唯一事实来源"：模型只能引用这里定义过的指标，
+# 不允许自己发明口径，也不允许把口径解释权交给提示词。
+#
+# 字段说明：
+#   id            指标唯一标识，代码与任务集引用它
+#   synonyms      用户可能怎么说，用于意图识别（不是用来改口径）
+#   formula       人类可读公式；sql_hint 是编译提示，不是最终 SQL
+#   grain         最小统计粒度
+#   dimensions    可切的维度
+#   caveats       边界情况，评测里专门考这些
+#   owner         口径负责人（企业里必须有人签字）
+#   version       口径版本，变更需登记 changelog
+
+version: "1.0.0"
+effective_from: "2025-01-01"
+updated_at: "2026-11-03"
+owner: "财务分析负责人"
+currency: "CNY"
+data_lag: "月结后 T+3"
+
+dimensions_global:
+  - { id: period,   name: 期间,     values: ["2024Q4", "2025Q1", "2025Q2", "2025Q3", "2025Q4"] }
+  - { id: region,   name: 区域,     values: ["华东", "华南", "华北"] }
+  - { id: project,  name: 项目,     source: "project.project_code" }
+  - { id: customer, name: 客户,     source: "project.customer_code" }
+  - { id: status,   name: 项目状态, values: ["在建", "已结项"] }
+
+metrics:
+
+  - id: recognized_revenue
+    name: 确认收入
+    name_en: Recognized Revenue
+    unit: 元
+    definition: >
+      按完工百分比法确认的项目收入，不含增值税。
+      跨期调整计入调整发生期间，不追溯重述历史期间。
+    formula: "SUM(revenue.recognized_revenue)"
+    sql_hint: "SUM(recognized_revenue) WHERE period = :period"
+    grain: "项目 × 期间"
+    dimensions: [period, region, project, customer, status]
+    source_tables: [revenue, project]
+    synonyms: [收入, 营收, 营业收入, 确认收入, 营业额, 做了多少]
+    caveats:
+      - "不含税。含税口径只在合同额与开票中出现，不可混用。"
+      - "未开工或未确认收入的项目不出现在结果里，不要补 0。"
+      - "跨期调整单独列示，不并入本期同比。"
+    owner: "财务分析负责人"
+    version: "1.0.0"
+    related_policy: [P-01, P-09]
+
+  - id: project_cost
+    name: 项目成本
+    name_en: Project Cost
+    unit: 元
+    definition: >
+      归集到项目的直接成本，含人工、材料、分包、其他四类。
+      不含管理费用、销售费用等期间费用。
+    formula: "SUM(cost.amount) WHERE cost_type IN ('人工','材料','分包','其他')"
+    sql_hint: "SUM(amount) WHERE cost_type <> '期间费用'"
+    grain: "项目 × 期间 × 成本类型"
+    dimensions: [period, region, project, cost_type]
+    source_tables: [cost, project]
+    synonyms: [成本, 项目成本, 直接成本, 花了多少]
+    caveats:
+      - "权责发生制：已发生未结算的也要计入。"
+      - "不含分摊的管理费用；把分摊算进成本会导致毛利率与财务口径不一致。"
+    owner: "成本管理负责人"
+    version: "1.0.0"
+    related_policy: [P-02, P-03]
+
+  - id: gross_margin
+    name: 项目毛利率
+    name_en: Gross Margin
+    unit: "%"
+    definition: "(确认收入 − 项目成本) / 确认收入"
+    formula: "(recognized_revenue - project_cost) / recognized_revenue"
+    sql_hint: "1 - SUM(cost)/NULLIF(SUM(revenue),0)"
+    grain: "项目 × 期间"
+    dimensions: [period, region, project, status]
+    source_tables: [revenue, cost, project]
+    synonyms: [毛利率, 毛利, 利润率, 赚不赚钱, 盈利水平]
+    caveats:
+      - "收入为 0 时返回 NULL，不返回 0 或 100%。"
+      - "负毛利必须保留负号，不能截断为 0。"
+      - "不含分摊费用；含分摊的叫'净利率'，本项目不提供该指标。"
+      - "已结项项目的毛利率为最终值，不再随期间变化。"
+    owner: "财务分析负责人"
+    version: "1.0.0"
+    related_policy: [P-02, P-04]
+
+  - id: collection_rate
+    name: 回款率（累计）
+    name_en: Cumulative Collection Rate
+    unit: "%"
+    definition: "累计回款 / 累计开票，统计区间为自然年年初至查询期间"
+    formula: "SUM(collected_amount) / SUM(invoiced_amount)"
+    sql_hint: "SUM(collected)/NULLIF(SUM(invoiced),0)"
+    grain: "项目 × 期间"
+    dimensions: [period, region, project, customer]
+    source_tables: [revenue, project]
+    synonyms: [回款率, 回款, 收款率, 钱收回来多少]
+    caveats:
+      - "分母是开票，不是收入。用收入做分母会和财务考核口径冲突。"
+      - "预收款不计入回款；以到账为准。"
+      - "开票为 0 时返回 NULL，不返回 0%。"
+      - "统计区间必须在回答中说明，否则视为口径不清。"
+    owner: "财务分析负责人"
+    version: "1.0.0"
+    related_policy: [P-05]
+
+  - id: expense_ratio
+    name: 费用率
+    name_en: Expense Ratio
+    unit: "%"
+    definition: "(管理费用 + 销售费用) / 确认收入；管理费用按收入 8% 分摊，销售费用按 5%"
+    formula: "(revenue * 0.08 + revenue * 0.05) / revenue"
+    sql_hint: "0.13（分摊规则恒定，实际发生额另表）"
+    grain: "区域 × 期间"
+    dimensions: [period, region]
+    source_tables: [revenue, org]
+    synonyms: [费用率, 管理费率, 期间费用]
+    caveats:
+      - "这是管理口径的分摊值，不等于实际发生的费用。"
+      - "回答时必须说明'按制度分摊'，不能表述为实际支出。"
+      - "分摊比例变更需走制度修订，不在指标层改。"
+    owner: "财务分析负责人"
+    version: "1.0.0"
+    related_policy: [P-03]
+
+  - id: revenue_per_head
+    name: 人均产值
+    name_en: Revenue per Head
+    unit: "元/人"
+    definition: "期间确认收入 / 期末在职人数"
+    formula: "SUM(revenue) / headcount_end"
+    sql_hint: "SUM(recognized_revenue)/NULLIF(headcount,0)"
+    grain: "区域 × 期间"
+    dimensions: [period, region]
+    source_tables: [revenue, headcount, org]
+    synonyms: [人均产值, 人均收入, 人效]
+    caveats:
+      - "用期末人数，不用平均人数，与人力报表口径一致。"
+      - "人数为 0 时返回 NULL。"
+      - "跨区域比较需说明业务结构差异，不宜直接排名。"
+    owner: "人力运营负责人"
+    version: "1.0.0"
+    related_policy: []
+
+  - id: schedule_variance
+    name: 进度偏差
+    name_en: Schedule Variance
+    unit: "%"
+    definition: "实际确认收入 / 计划确认收入 − 1"
+    formula: "(actual_revenue - planned_revenue) / planned_revenue"
+    sql_hint: "1 - planned/NULLIF(actual,0) 的反向写法需谨慎，统一用 (actual-planned)/planned"
+    grain: "项目 × 期间"
+    dimensions: [period, region, project]
+    source_tables: [revenue, plan, project]
+    synonyms: [进度偏差, 进度, 滞后, 延期, 完成率]
+    caveats:
+      - "负值表示滞后，正值表示超前。"
+      - "计划为 0 时返回 NULL（项目尚未排期）。"
+      - "不能用合同额代替计划收入。"
+    owner: "项目管理办公室"
+    version: "1.0.0"
+    related_policy: [P-06]
+
+  - id: contract_amount
+    name: 新增合同额
+    name_en: New Contract Amount
+    unit: 元
+    definition: "统计期内签署并生效的合同金额合计，含税"
+    formula: "SUM(contract.amount) WHERE status = '有效' AND signed_period = :period"
+    sql_hint: "SUM(amount) WHERE status='有效'"
+    grain: "期间 × 区域 × 合同类型"
+    dimensions: [period, region, contract_type, status]
+    source_tables: [contract, project]
+    synonyms: [合同额, 新签, 签约额, 拿了多少合同]
+    caveats:
+      - "含税，与确认收入（不含税）不可直接相加或比较。"
+      - "未生效的变更单不计入。"
+      - "框架协议不计入，除非已下达具体订单。"
+    owner: "商务管理负责人"
+    version: "1.0.0"
+    related_policy: [P-07, P-08]
+
+  - id: headcount
+    name: 期末在职人数
+    name_en: Headcount (End of Period)
+    unit: 人
+    definition: "统计期末在职员工人数，按区域口径"
+    formula: "headcount.period = :period"
+    sql_hint: "SELECT headcount WHERE period = :period"
+    grain: "区域 × 期间"
+    dimensions: [period, region]
+    source_tables: [headcount, org]
+    synonyms: [人数, 在职人数, 编制人数, 有多少人]
+    caveats:
+      - "时点值，跨期不能相加；把 Q1-Q4 人数加总没有意义。"
+      - "是人均产值的分母，口径必须与人力报表一致。"
+      - "人数为 0 时，人均产值返回 NULL，不返回 0。"
+    owner: "人力运营负责人"
+    version: "1.0.0"
+    related_policy: []
+
+# ---------------------------------------------------------------
+# 口径冲突与决策记录（面试最常被追问的部分）
+# ---------------------------------------------------------------
+conflicts_resolved:
+
+  - id: C-01
+    question: 毛利率要不要摊管理费用？
+    decision: 不摊。项目毛利率只含直接成本；摊费用后叫净利率，另设指标。
+    reason: 摊了之后项目经理无法对结果负责，且分摊比例一变，历史数据全部失真。
+    impact: 与部分业务口的"毛利"口径不同，需在报告附录注明。
+
+  - id: C-02
+    question: 回款率的分母用收入还是开票？
+    decision: 用开票。
+    reason: 回款对应的是已开票金额，用收入做分母会产生"未开票也要收钱"的伪指标。
+    impact: 开票与收入确认时点不一致时，两个指标会背离，属正常。
+
+  - id: C-03
+    question: 人均产值用期末人数还是平均人数？
+    decision: 期末人数。
+    reason: 与人力月报一致，避免两套人数。
+    impact: 人员剧烈变动期间该指标波动大，需配合人数一起看。
+
+  - id: C-04
+    question: 跨期调整是否追溯重算历史？
+    decision: 不追溯，计入调整期。
+    reason: 历史报表已对外报送，重算会造成前后不一致。
+    impact: 单期毛利率可能出现异常波动，需在报告中说明。
+
+  - id: C-05
+    question: 合同额含税还是不含税？
+    decision: 含税；确认收入不含税。
+    reason: 合同按含税签署，收入按会计准则不含税确认。
+    impact: 两者不可直接相减，报告需分列。

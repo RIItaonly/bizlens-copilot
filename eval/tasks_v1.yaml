@@ -1,0 +1,1305 @@
+# BizLens 评测任务集 v1（60 条，含留出集）
+# 60 条 = 6 类 × 10 条；其中 12 条为 holdout，不参与调优
+# ground truth 由 scripts/build_tasks.py 从合成数据计算
+# 数据：data/seed/*.csv（全部虚构）；口径：data/metrics.yaml；制度：data/policy.md
+# 评测规则与指标定义见 docs/02-评测设计.md
+# 注意：仍未做双人标注，正式发布前需人工复核 20%
+
+meta:
+  count: 60
+  holdout: 12
+  version: "1.0.0"
+  data_snapshot: "seed@20251103"
+  categories: [T1, T2, T3, T4, T5, T6]
+
+tasks:
+  - id: "T1-001"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "2025 年 Q4 华东区域的确认收入是多少？"
+    expected:
+      type: "scalar"
+      value: 36645300
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "口径：不含税、按项目归属区域汇总。答成含税或按客户归属均判错。"
+    split: "dev"
+  - id: "T1-002"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "2025 年全年公司的确认收入合计是多少？"
+    expected:
+      type: "scalar"
+      value: 729116600
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "四个季度相加；不能把 2024Q4 算进去。"
+    split: "dev"
+  - id: "T1-003"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "2025 年 Q4 华南区域的期末在职人数是多少？"
+    expected:
+      type: "scalar"
+      value: 144
+      unit: "人"
+      tolerance: 0
+    must_cite:
+      - "metric:headcount"
+      - "table:headcount"
+    rubric_focus:
+      - "数值正确性"
+    notes: "人数是人均产值指标的分母，必须与指标口径一致（期末，不是平均）。"
+    split: "dev"
+  - id: "T1-004"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "medium"
+    question: "2025 年 Q4 新签合同额是多少？"
+    expected:
+      type: "scalar"
+      value: 6176000
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:contract_amount"
+      - "table:contract"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "只统计 Q4 签署且状态为有效的合同；无效的补充协议不能计入。"
+    split: "dev"
+  - id: "T1-005"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "P-127（瑞成物流枢纽）在 2025 年 Q4 的确认收入是多少？"
+    expected:
+      type: "scalar"
+      value: 22145000
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "考察指代消解：用户用项目名而非编码提问时能否正确映射。"
+    split: "dev"
+  - id: "T2-001"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年 Q4 毛利率最低的 5 个项目是哪些？给出项目编码、名称和毛利率。"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "gross_margin"
+      order: "按毛利率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-119', '锦泰学校新建', -0.0644]
+        - ['P-121', '长兴智造园一期', -0.0435]
+        - ['P-106', '长兴医院改扩建', 0.054]
+        - ['P-124', '鼎盛数据中心二期', 0.0846]
+        - ['P-126', '嘉禾医院改扩建', 0.1062]
+    must_cite:
+      - "metric:gross_margin"
+      - "table:revenue"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "负毛利项目必须排在前面；未开工项目不应出现。"
+    split: "dev"
+  - id: "T2-002"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "easy"
+    question: "2025 年全年确认收入最高的 3 个项目是哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "recognized_revenue"
+      order: "按收入降序"
+      rows:
+        - ['P-103', '星河研发中心', 52575400]
+        - ['P-121', '长兴智造园一期', 46852700]
+        - ['P-127', '瑞成物流枢纽', 46578600]
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+    notes: "全年累计，不是单季度。"
+    split: "dev"
+  - id: "T2-003"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年累计回款率最低的 3 个项目是哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "collection_rate"
+      order: "按回款率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-105', '恒越变电站', 0.5555]
+        - ['P-116', '滨江医院改扩建', 0.5583]
+        - ['P-119', '锦泰学校新建', 0.5657]
+    must_cite:
+      - "metric:collection_rate"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "分母是开票不是收入；统计区间为 2025 年初至 Q4。"
+    split: "dev"
+  - id: "T2-004"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年 Q4 确认收入环比降幅最大的 3 个项目是哪些？给出环比变化率。"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "qoq_change"
+      order: "按环比变化率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-103', '星河研发中心', -0.564]
+        - ['P-107', '万象物流枢纽', -0.5034]
+        - ['P-128', '海纳综合体', -0.3266]
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "只在 Q3、Q4 都有收入的项目里比较；Q3 无收入的项目不参与排名。"
+    split: "dev"
+  - id: "T2-005"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "hard"
+    question: "2025 年人均产值最高的区域是哪个？人均产值是多少？"
+    expected:
+      type: "object"
+      properties:
+        region_name: "华北"
+        revenue_per_head: 2573746
+      unit: "元/人"
+      tolerance: 0.01
+    must_cite:
+      - "metric:revenue_per_head"
+      - "table:headcount"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "分子是全年收入，分母是 Q4 期末人数；两者时点不同是口径规定，不是错误。"
+    split: "dev"
+  - id: "T3-001"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "medium"
+    question: "2025 年 Q4 毛利率低于 10% 的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "gross_margin"
+      order: "按毛利率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-119', '锦泰学校新建', -0.0644]
+        - ['P-121', '长兴智造园一期', -0.0435]
+        - ['P-106', '长兴医院改扩建', 0.054]
+        - ['P-124', '鼎盛数据中心二期', 0.0846]
+    must_cite:
+      - "metric:gross_margin"
+      - "policy:P-04"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "边界值等于 10% 的项目不计入（严格小于）。"
+    split: "dev"
+  - id: "T3-002"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "medium"
+    question: "2025 年累计回款率低于 60% 的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "collection_rate"
+      order: "按回款率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-105', '恒越变电站', 0.5555]
+        - ['P-116', '滨江医院改扩建', 0.5583]
+        - ['P-119', '锦泰学校新建', 0.5657]
+        - ['P-115', '新华变电站', 0.5667]
+    must_cite:
+      - "metric:collection_rate"
+      - "policy:P-05"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "低于 50% 的项目按制度应计提坏账，回答里最好指出这一点（加分项，非必须）。"
+    split: "dev"
+  - id: "T3-003"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "easy"
+    question: "2025 年 Q4 出现负毛利的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "gross_margin"
+      order: "按毛利率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-119', '锦泰学校新建', -0.0644]
+        - ['P-121', '长兴智造园一期', -0.0435]
+    must_cite:
+      - "metric:gross_margin"
+      - "policy:P-04"
+    rubric_focus:
+      - "数值正确性"
+    notes: "负毛利必须保留负号；不能四舍五入成 0 或显示为 100%。"
+    split: "dev"
+  - id: "T3-004"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "hard"
+    question: "2025 年 Q4 进度偏差低于 -30% 的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "schedule_variance"
+      order: "按进度偏差升序"
+      tolerance: 0.001
+      rows:
+        - ['P-114', '中科数据中心二期', -0.3436]
+        - ['P-118', '星河综合体', -0.3403]
+        - ['P-112', '瑞成水务工程', -0.3337]
+        - ['P-106', '长兴医院改扩建', -0.32]
+        - ['P-115', '新华变电站', -0.3143]
+    must_cite:
+      - "metric:schedule_variance"
+      - "policy:P-06"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "计划收入为 0 的项目不参与（尚未排期，不能算滞后）。"
+    split: "dev"
+  - id: "T3-005"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "hard"
+    question: "2025 年 Q4 毛利率低于 15%、且 2025 年累计回款率低于 70% 的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "gross_margin"
+        - "collection_rate"
+      order: "按毛利率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-119', '锦泰学校新建', -0.0644, 0.5657]
+        - ['P-126', '嘉禾医院改扩建', 0.1062, 0.6675]
+        - ['P-115', '新华变电站', 0.1188, 0.5667]
+    must_cite:
+      - "metric:gross_margin"
+      - "metric:collection_rate"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "两个条件同时满足；这是“双高风险”清单，缺一个条件都算错。"
+    split: "dev"
+  - id: "T4-001"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "hard"
+    question: "P-117（云岭物流枢纽）2025 年 Q4 毛利率下降，主要是收入端还是成本端造成的？请给出拆解。"
+    expected:
+      type: "structured"
+      key_facts:
+        - "Q3 毛利率 0.2867，Q4 毛利率 0.1981，变化 -0.0886"
+        - "收入端影响 -0.264，成本端影响 0.1754"
+        - "成本变化最大的是「人工」：减少 461800 元"
+      answer_hint: "收入端"
+    must_cite:
+      - "metric:gross_margin"
+      - "table:cost"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+      - "引用可追溯"
+    notes: "必须做量价/成本拆解，不能只给结论；结论与拆解方向不一致即判错。"
+    split: "dev"
+  - id: "T4-002"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "hard"
+    question: "2025 年 Q4 华东区域确认收入环比下降，主要是哪个项目造成的？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "华东 Q3 收入 45360100，Q4 收入 36645300，环比 -0.1921"
+        - "下降贡献最大的项目是 P-107（万象物流枢纽），环比减少 2679800 元"
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "归因有效性"
+      - "引用可追溯"
+    notes: "要做项目级贡献度排序，不能只给区域汇总。"
+    split: "dev"
+  - id: "T4-003"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "medium"
+    question: "P-105（恒越变电站）2025 年累计回款率偏低，主要差在开票还是回款？还差多少钱？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "累计开票 31513900 元，累计回款 17505900 元，回款率 0.5555"
+        - "未回款金额 14008000 元"
+        - "缺口在回款端：开票已发生但未到账"
+    must_cite:
+      - "metric:collection_rate"
+      - "table:revenue"
+    rubric_focus:
+      - "归因有效性"
+      - "数值正确性"
+    notes: "区分“没开票”和“开了票没收到钱”，这是回款分析的关键。"
+    split: "dev"
+  - id: "T4-004"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "medium"
+    question: "2025 年 Q4 公司整体项目成本环比变化如何？哪一类成本变化幅度最大？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "Q4 总成本 128409200，Q3 总成本 187118400，环比 -0.3138"
+        - "变化幅度最大的是「材料」：下降 21198200 元"
+    must_cite:
+      - "metric:project_cost"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "四类成本要分别对比，不能只看总额；注意总额下降不等于每一类都下降。"
+    split: "dev"
+  - id: "T4-005"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "hard"
+    question: "2025 年 Q4 毛利率环比降幅最大的项目是哪个？降幅中收入端和成本端各占多少？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "项目 P-121（长兴智造园一期），毛利率 0.0702 → -0.0435"
+        - "收入端影响 -0.2497，成本端影响 0.1361"
+      answer_hint: "收入端"
+    must_cite:
+      - "metric:gross_margin"
+      - "table:revenue"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "先找降幅最大的项目，再做两因素拆解，两步都对才得分。"
+    split: "dev"
+  - id: "T5-001"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "easy"
+    question: "合同首付款比例最高可以是多少？超过上限需要谁审批？"
+    expected:
+      type: "text"
+      key_points:
+        - "不得超过合同金额的 30%"
+        - "超过需报分管副总经理审批"
+        - "并在合同审批单中说明理由"
+    must_cite:
+      - "policy:P-07"
+    rubric_focus:
+      - "引用可追溯"
+      - "数值正确性"
+    notes: "制度型问题必须引用条款号，不能只凭常识回答。"
+    split: "dev"
+  - id: "T5-002"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "easy"
+    question: "管理费用和销售费用是怎么分摊到区域的？"
+    expected:
+      type: "text"
+      key_points:
+        - "管理费用按当期确认收入的 8% 分摊"
+        - "销售费用按当期确认收入的 5% 分摊"
+        - "分摊仅用于管理分析，不改变法定报表"
+    must_cite:
+      - "policy:P-03"
+    rubric_focus:
+      - "引用可追溯"
+      - "数值正确性"
+    notes: "注意区分“分摊值”与“实际发生额”，回答里说成实际支出即扣分。"
+    split: "dev"
+  - id: "T5-003"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "medium"
+    question: "项目收入按什么方法确认？跨期调整怎么处理？"
+    expected:
+      type: "text"
+      key_points:
+        - "按完工百分比法，以累计已发生成本占预计总成本比例确认"
+        - "跨期调整计入调整发生期间，不追溯重述历史报表"
+    must_cite:
+      - "policy:P-01"
+    rubric_focus:
+      - "引用可追溯"
+    notes: "考察是否理解“不追溯”这条口径决策，以及它对同比的影响。"
+    split: "dev"
+  - id: "T5-004"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "medium"
+    question: "项目毛利率低于多少会触发专项复盘？低于多少需要书面说明？"
+    expected:
+      type: "text"
+      key_points:
+        - "低于 15% 需在月度经营会提交书面说明"
+        - "低于 5%（含负毛利）触发专项复盘，30 日内出报告"
+        - "连续两个季度低于 5% 暂停新签同类项目"
+    must_cite:
+      - "policy:P-04"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "两个阈值容易混（15% 与 5%），必须都答对。"
+    split: "dev"
+  - id: "T5-005"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "medium"
+    question: "项目累计回款率低于 70% 会有什么后果？低于 50% 呢？"
+    expected:
+      type: "text"
+      key_points:
+        - "低于 70% 暂停该项目新签合同审批"
+        - "低于 50% 按未回款金额的 10% 计提坏账准备"
+    must_cite:
+      - "policy:P-05"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "两个阈值分别对应“暂停新签”与“计提坏账”，措施不能张冠李戴。"
+    split: "dev"
+  - id: "T6-001"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "medium"
+    question: "为 P-127（瑞成物流枢纽）生成 2025 年 Q4 经营简报。"
+    expected:
+      type: "report"
+      required_sections:
+        - "结论"
+        - "关键指标"
+        - "异常与风险"
+        - "归因"
+        - "建议动作"
+      key_numbers:
+        recognized_revenue: 22145000
+        project_cost: 15938800
+        gross_margin: 0.2803
+    must_cite:
+      - "metric:recognized_revenue"
+      - "metric:gross_margin"
+      - "table:cost"
+    rubric_focus:
+      - "可执行性"
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "建议动作必须包含动作、责任人角色、时限三要素，否则可执行性只能给 1 分。"
+    split: "dev"
+  - id: "T6-002"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "生成 2025 年 Q4 华东区域经营分析报告。"
+    expected:
+      type: "report"
+      required_sections:
+        - "结论"
+        - "关键指标"
+        - "异常与风险"
+        - "归因"
+        - "建议动作"
+      key_numbers:
+        revenue_q3: 45360100
+        revenue_q4: 36645300
+        qoq_change: -0.1921
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "可执行性"
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "区域报告必须包含项目级归因，只报区域汇总视为归因缺失。"
+    split: "dev"
+  - id: "T6-003"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "针对 2025 年 Q4 毛利率低于 10% 的项目，生成一份专项说明。"
+    expected:
+      type: "report"
+      required_sections:
+        - "问题清单"
+        - "原因分析"
+        - "制度依据"
+        - "处置建议"
+      key_numbers:
+        project_count: 4
+        threshold: 0.1
+    must_cite:
+      - "metric:gross_margin"
+      - "policy:P-04"
+    rubric_focus:
+      - "可执行性"
+      - "引用可追溯"
+    notes: "必须引用毛利率红线制度，并说明触发了哪一档处置。"
+    split: "dev"
+  - id: "T6-004"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "生成 2025 年度经营总结（公司层面）。"
+    expected:
+      type: "report"
+      required_sections:
+        - "年度概览"
+        - "区域表现"
+        - "项目结构"
+        - "风险项"
+        - "下一年度建议"
+      key_numbers:
+        revenue_2025: 729116600
+        new_contracts_2025: 660545000
+    must_cite:
+      - "metric:recognized_revenue"
+      - "metric:contract_amount"
+    rubric_focus:
+      - "可执行性"
+      - "数值正确性"
+    notes: "年度总结必须区分“收入（不含税）”与“合同额（含税）”，混用即扣分。"
+    split: "dev"
+  - id: "T6-005"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "针对 2025 年 Q4 进度偏差低于 -30% 的项目，提出下季度改善建议。"
+    expected:
+      type: "report"
+      required_sections:
+        - "滞后项目清单"
+        - "滞后程度"
+        - "可能原因"
+        - "改善动作"
+      key_numbers:
+        project_count: 5
+    must_cite:
+      - "metric:schedule_variance"
+      - "policy:P-06"
+    rubric_focus:
+      - "可执行性"
+      - "归因有效性"
+    notes: "改善动作要对应制度要求（10 个工作日内提交纠偏计划）。"
+    split: "dev"
+  - id: "T1-006"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "2025 年 Q3 华北区域的确认收入是多少？"
+    expected:
+      type: "scalar"
+      value: 96454700
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+    notes: "换季度、换区域，检验维度过滤是否真正参数化。"
+    split: "holdout"
+  - id: "T1-007"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "P-103 在 2025 年全年的确认收入是多少？"
+    expected:
+      type: "scalar"
+      value: 52575400
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+    notes: "项目 + 全年组合，检验“项目维度 + 期间区间”能否叠加。"
+    split: "holdout"
+  - id: "T1-008"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "2025 年公司整体项目成本合计是多少？"
+    expected:
+      type: "scalar"
+      value: 614522000
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:project_cost"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+    notes: "成本口径：只含直接成本四类，不含期间费用。"
+    split: "dev"
+  - id: "T1-009"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "medium"
+    question: "2025 年全年新签合同额合计是多少？"
+    expected:
+      type: "scalar"
+      value: 660545000
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:contract_amount"
+      - "table:contract"
+    rubric_focus:
+      - "数值正确性"
+    notes: "合同额含税，且只算有效合同；与收入不可相加。"
+    split: "dev"
+  - id: "T1-010"
+    category: "T1"
+    category_name: "单指标查询"
+    difficulty: "easy"
+    question: "2025 年 Q1 华东区域的期末在职人数是多少？"
+    expected:
+      type: "scalar"
+      value: 168
+      unit: "人"
+      tolerance: 0
+    must_cite:
+      - "metric:headcount"
+      - "table:headcount"
+    rubric_focus:
+      - "数值正确性"
+    notes: "季度切片下的人数是时点值，不能被 SUM 聚合。"
+    split: "dev"
+  - id: "T2-006"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年 Q4 项目成本最高的 5 个项目是哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "project_cost"
+      order: "按成本降序"
+      tolerance: 0.005
+      rows:
+        - ['P-127', '瑞成物流枢纽', 15938800]
+        - ['P-121', '长兴智造园一期', 13091200]
+        - ['P-105', '恒越变电站', 11897000]
+        - ['P-115', '新华变电站', 9669300]
+        - ['P-119', '锦泰学校新建', 9255300]
+    must_cite:
+      - "metric:project_cost"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+    notes: "成本排名与毛利率排名不一定一致，这是考点。"
+    split: "dev"
+  - id: "T2-007"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年全年确认收入最低的 3 个区域是哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "region_name"
+        - "recognized_revenue"
+      order: "按收入升序"
+      rows:
+        - ['华东', 186564000]
+        - ['华南', 220834300]
+        - ['华北', 321718300]
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+    notes: "区域只有三个，排名即全量；注意不要漏掉最后一名。"
+    split: "holdout"
+  - id: "T2-008"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年 Q4 进度偏差最大的 3 个项目是哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "schedule_variance"
+      order: "按进度偏差降序"
+      tolerance: 0.001
+      rows:
+        - ['P-126', '嘉禾医院改扩建', 0.1423]
+        - ['P-104', '锦泰数据中心二期', 0.0648]
+        - ['P-107', '万象物流枢纽', 0.0623]
+    must_cite:
+      - "metric:schedule_variance"
+      - "table:plan"
+    rubric_focus:
+      - "数值正确性"
+    notes: "“最大”指代数值最大（最超前），不是绝对值；方向答反即错。"
+    split: "dev"
+  - id: "T2-009"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年全年毛利率最高的 3 个项目是哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "gross_margin"
+      order: "按毛利率降序"
+      tolerance: 0.001
+      rows:
+        - ['P-111', '嘉禾智造园一期', 0.3746]
+        - ['P-101', '滨江智造园一期', 0.3449]
+        - ['P-108', '启元综合体', 0.3319]
+    must_cite:
+      - "metric:gross_margin"
+      - "table:revenue"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+    notes: "全年毛利率要用全年收入与全年成本，不能取四个季度毛利率的平均。"
+    split: "dev"
+  - id: "T2-010"
+    category: "T2"
+    category_name: "对比与排名"
+    difficulty: "medium"
+    question: "2025 年 Q4 新签合同额最高的 2 个区域是哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "region_name"
+        - "contract_amount"
+      order: "按合同额降序"
+      tolerance: 0.005
+      rows:
+        - ['华南', 3567000]
+        - ['华北', 2609000]
+    must_cite:
+      - "metric:contract_amount"
+      - "table:contract"
+    rubric_focus:
+      - "数值正确性"
+    notes: "合同按项目归属区域汇总，不是按签约主体。"
+    split: "holdout"
+  - id: "T3-006"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "hard"
+    question: "2025 年 Q4 确认收入环比下滑超过 20% 的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "qoq_change"
+      order: "按环比变化率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-103', '星河研发中心', -0.564]
+        - ['P-107', '万象物流枢纽', -0.5034]
+        - ['P-128', '海纳综合体', -0.3266]
+        - ['P-117', '云岭物流枢纽', -0.2701]
+        - ['P-124', '鼎盛数据中心二期', -0.2652]
+        - ['P-115', '新华变电站', -0.2567]
+        - ['P-106', '长兴医院改扩建', -0.2382]
+        - ['P-121', '长兴智造园一期', -0.2117]
+        - ['P-126', '嘉禾医院改扩建', -0.2028]
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "严格小于 -20%；Q3 无收入的项目不参与比较。"
+    split: "dev"
+  - id: "T3-007"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "hard"
+    question: "2025 年 Q4 项目成本超过 1000 万、且毛利率低于 15% 的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "gross_margin"
+      order: "按毛利率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-121', '长兴智造园一期', -0.0435]
+    must_cite:
+      - "metric:gross_margin"
+      - "metric:project_cost"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "金额条件与比率条件同时满足；只看毛利率会漏掉大额低毛利项目。"
+    split: "holdout"
+  - id: "T3-008"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "hard"
+    question: "2025 年 Q4 进度滞后超过 20%、且毛利率低于 15% 的项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "schedule_variance"
+        - "gross_margin"
+      order: "按进度偏差升序"
+      tolerance: 0.001
+      rows:
+        - ['P-106', '长兴医院改扩建', -0.32, 0.054]
+        - ['P-115', '新华变电站', -0.3143, 0.1188]
+        - ['P-125', '天工变电站', -0.298, 0.1301]
+    must_cite:
+      - "metric:schedule_variance"
+      - "metric:gross_margin"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "“又慢又不赚钱”的组合，是两个指标的交集。"
+    split: "dev"
+  - id: "T3-009"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "medium"
+    question: "2025 年 Q4 没有确认收入的在建项目有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "project_code"
+        - "project_name"
+        - "status"
+      order: "按项目编码升序"
+      rows:
+        - ['P-102', '云岭水务工程', '在建']
+        - ['P-108', '启元综合体', '在建']
+        - ['P-110', '天工产业园三期', '在建']
+        - ['P-113', '海纳研发中心', '在建']
+        - ['P-120', '恒越产业园三期', '在建']
+        - ['P-122', '万象水务工程', '在建']
+        - ['P-123', '启元研发中心', '在建']
+        - ['P-129', '中科学校新建', '在建']
+        - ['P-130', '新华产业园三期', '在建']
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:project"
+    rubric_focus:
+      - "数值正确性"
+    notes: "这不是财务异常而是数据完整性检查：在建却零收入，通常意味着未报量。"
+    split: "dev"
+  - id: "T3-010"
+    category: "T3"
+    category_name: "异常识别"
+    difficulty: "medium"
+    question: "2025 年新签合同中，首付款比例超过 30% 的合同有哪些？"
+    expected:
+      type: "table"
+      columns:
+        - "contract_code"
+        - "project_code"
+        - "first_payment_ratio"
+      order: "按首付款比例降序"
+      tolerance: 0.001
+      rows:
+        - ['HT-103-01', 'P-103', 0.5]
+        - ['HT-110-01', 'P-110', 0.5]
+        - ['HT-129-01', 'P-129', 0.5]
+        - ['HT-125-01', 'P-125', 0.5]
+        - ['HT-123-01', 'P-123', 0.5]
+        - ['HT-130-01', 'P-130', 0.5]
+        - ['HT-126-01', 'P-126', 0.5]
+        - ['HT-106-01', 'P-106', 0.4]
+        - ['HT-108-01', 'P-108', 0.4]
+        - ['HT-112-01', 'P-112', 0.4]
+        - ['HT-117-01', 'P-117', 0.4]
+        - ['HT-124-01', 'P-124', 0.4]
+        - ['HT-128-01', 'P-128', 0.4]
+    must_cite:
+      - "policy:P-07"
+      - "table:contract"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "制度扫描题：不只看数，还要引用 P-07 说明违规点。"
+    split: "holdout"
+  - id: "T4-006"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "hard"
+    question: "2025 年 Q4 哪个区域毛利率最低？主要拖累项目是哪个？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "最低的是华北，区域毛利率 0.143"
+        - "拖累最大的是 P-121（长兴智造园一期），毛利率 -0.0435"
+    must_cite:
+      - "metric:gross_margin"
+      - "table:revenue"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+      - "引用可追溯"
+    notes: "先算区域层，再下钻项目层；顺序反了容易把个体问题说成区域问题。"
+    split: "dev"
+  - id: "T4-007"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "hard"
+    question: "2025 年 Q4 公司整体毛利率环比变化，收入端和成本端各贡献多少？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "毛利率 0.1586 → 0.1734"
+        - "收入端贡献 -0.3632，成本端贡献 0.3779"
+    must_cite:
+      - "metric:gross_margin"
+      - "table:revenue"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "公司层拆解用的是总量，不能用各项目贡献的简单平均。"
+    split: "holdout"
+  - id: "T4-008"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "medium"
+    question: "2025 年人工成本占项目成本比例最高的项目是哪个？占比多少？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "P-116（滨江医院改扩建）人工成本占比 0.6642"
+    must_cite:
+      - "metric:project_cost"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "结构分析：占比高不等于金额大，两个维度都要看。"
+    split: "dev"
+  - id: "T4-009"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "medium"
+    question: "2025 年 Q4 确认收入环比增幅最大的项目是哪个？增幅多少？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "P-127（瑞成物流枢纽）环比 0.4895，从 14867000 增至 22145000"
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "增幅要用相对值排名；基数很小的项目容易冲到第一，需说明绝对增量。"
+    split: "holdout"
+  - id: "T4-010"
+    category: "T4"
+    category_name: "归因分析"
+    difficulty: "medium"
+    question: "2025 年全年四类成本中，占比最高的是哪一类？占比多少？"
+    expected:
+      type: "structured"
+      key_facts:
+        - "人工 占比 0.3705"
+        - "四类合计 614522000"
+    must_cite:
+      - "metric:project_cost"
+      - "table:cost"
+    rubric_focus:
+      - "数值正确性"
+      - "归因有效性"
+    notes: "结构占比题，分母是四类成本合计，不是收入。"
+    split: "dev"
+  - id: "T5-006"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "medium"
+    question: "进度偏差低于多少算重大滞后？需要做什么？"
+    expected:
+      type: "text"
+      key_points:
+        - "进度偏差低于 -20% 判定为重大滞后"
+        - "项目负责人 10 个工作日内提交纠偏计划"
+        - "连续两个季度重大滞后纳入公司级风险清单"
+    must_cite:
+      - "policy:P-06"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "阈值与动作要成对回答，只答阈值不给动作算半分。"
+    split: "dev"
+  - id: "T5-007"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "medium"
+    question: "经营数据什么时候出具？发布之后还能修改吗？"
+    expected:
+      type: "text"
+      key_points:
+        - "财务月结后 T+3 个工作日内出具"
+        - "数据一经发布当期不再修改"
+        - "后续调整在下一期体现"
+    must_cite:
+      - "policy:P-09"
+    rubric_focus:
+      - "引用可追溯"
+      - "数值正确性"
+    notes: "这条决定了“为什么同一指标两期口径会变”，是理解跨期调整的前提。"
+    split: "dev"
+  - id: "T5-008"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "medium"
+    question: "指标口径如果要变更，走什么流程？会重算历史数据吗？"
+    expected:
+      type: "text"
+      key_points:
+        - "由财务分析负责人提出，经营管理部评审后发布"
+        - "口径变更须版本化并登记变更记录"
+        - "不追溯重算历史，新旧口径并行一个季度后切换"
+    must_cite:
+      - "policy:P-10"
+    rubric_focus:
+      - "引用可追溯"
+    notes: "考察对“口径治理”的理解：变更可控，但历史不重算。"
+    split: "holdout"
+  - id: "T5-009"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "medium"
+    question: "合同变更什么时候计入合同额？框架协议算不算？"
+    expected:
+      type: "text"
+      key_points:
+        - "变更须双方盖章后生效，未生效不计入"
+        - "框架协议不计入，以下达的具体订单为准"
+        - "合同额按含税金额统计"
+    must_cite:
+      - "policy:P-08"
+    rubric_focus:
+      - "引用可追溯"
+      - "数值正确性"
+    notes: "三个小点都要答到，漏一个扣一分。"
+    split: "dev"
+  - id: "T5-010"
+    category: "T5"
+    category_name: "制度与口径"
+    difficulty: "hard"
+    question: "项目收入确认有没有上限？跨年是怎么处理的？"
+    expected:
+      type: "text"
+      key_points:
+        - "同一项目年度内确认收入不得超过合同不含税金额"
+        - "未开工项目不确认收入"
+        - "跨期调整计入调整发生期间，不追溯重述"
+    must_cite:
+      - "policy:P-01"
+    rubric_focus:
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "上限与跨期两条规则常被忽略，是“收入为什么不会无限增长”的答案。"
+    split: "holdout"
+  - id: "T6-006"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "生成 2025 年华南区域年度经营报告。"
+    expected:
+      type: "report"
+      required_sections:
+        - "年度概览"
+        - "关键指标"
+        - "异常项目"
+        - "归因"
+        - "下一年度建议"
+      key_numbers:
+        revenue_2025: 220834300
+    must_cite:
+      - "metric:recognized_revenue"
+      - "metric:gross_margin"
+    rubric_focus:
+      - "可执行性"
+      - "数值正确性"
+      - "引用可追溯"
+    notes: "区域年度报告要覆盖四个季度，不能只写 Q4。"
+    split: "dev"
+  - id: "T6-007"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "生成一份回款风险专项报告（累计回款率低于 70% 的项目）。"
+    expected:
+      type: "report"
+      required_sections:
+        - "风险项目清单"
+        - "回款缺口"
+        - "制度依据"
+        - "催收建议"
+      key_numbers:
+        project_count: 11
+        threshold: 0.7
+    must_cite:
+      - "metric:collection_rate"
+      - "policy:P-05"
+    rubric_focus:
+      - "可执行性"
+      - "引用可追溯"
+    notes: "要区分“开票未回款”与“未开票”，两者的处置动作不同。"
+    split: "holdout"
+  - id: "T6-008"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "生成一份进度滞后专项报告（Q4 进度偏差低于 -30% 的项目）。"
+    expected:
+      type: "report"
+      required_sections:
+        - "滞后项目清单"
+        - "滞后程度"
+        - "可能原因"
+        - "改善动作"
+      key_numbers:
+        project_count: 5
+    must_cite:
+      - "metric:schedule_variance"
+      - "policy:P-06"
+    rubric_focus:
+      - "可执行性"
+      - "归因有效性"
+    notes: "纠偏计划要写到责任人角色和时限，否则可执行性不给满分。"
+    split: "dev"
+  - id: "T6-009"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "生成 2025 年新签合同结构分析。"
+    expected:
+      type: "report"
+      required_sections:
+        - "总量"
+        - "按类型"
+        - "按区域"
+        - "异常合同"
+        - "建议"
+      key_numbers:
+        contract_count: 30
+        total_amount: 660545000
+    must_cite:
+      - "metric:contract_amount"
+      - "policy:P-07"
+    rubric_focus:
+      - "可执行性"
+      - "数值正确性"
+    notes: "结构分析要说明“哪类合同占比变化”，只报总数没有洞察。"
+    split: "holdout"
+  - id: "T6-010"
+    category: "T6"
+    category_name: "报告生成"
+    difficulty: "hard"
+    question: "给管理层生成一页纸经营摘要（2025 年 Q4）。"
+    expected:
+      type: "report"
+      required_sections:
+        - "一句话结论"
+        - "三个关键数字"
+        - "两个风险"
+        - "一个建议"
+      key_numbers:
+        revenue_q4: 155337000
+        gross_margin_q4: 0.1734
+        new_contracts_q4: 6176000
+    must_cite:
+      - "metric:recognized_revenue"
+      - "metric:gross_margin"
+      - "metric:contract_amount"
+    rubric_focus:
+      - "可执行性"
+      - "数值正确性"
+    notes: "一页纸的难点是取舍：三个数字必须是最能说明问题的，不能平均用力。"
+    split: "dev"

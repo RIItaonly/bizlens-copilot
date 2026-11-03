@@ -1,0 +1,144 @@
+# 封存留出集 v2（sealed）
+# ---------------------------------------------------------------
+# 协议：这 8 条在发布前只跑一次，跑完无论结果如何都记录，不回头改代码。
+# 生成方式：ground truth 由 pandas 直接从 data/seed 计算，未经过路由器，
+#           因此不存在"照着答案写规则"。
+# 运行（由你自己执行，我不会预先跑）：
+#   python src/eval_runner.py eval/sealed_v2.yaml --split sealed --out eval/report_sealed.md
+#
+# 覆盖：T1 4 条 + T2 4 条，全部是主任务集里**没有出现过**的切片组合。
+
+meta:
+  count: 8
+  version: "1.0.0"
+  split: sealed
+  note: "跑之前不要看 report_sealed.md，跑完再决定要不要修"
+
+tasks:
+  - id: "S-01"
+    category: "T1"
+    split: "sealed"
+    difficulty: "easy"
+    question: "2025 年 Q2 华南区域的确认收入是多少？"
+    expected:
+      type: "scalar"
+      value: 67469200
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+
+  - id: "S-02"
+    category: "T1"
+    split: "sealed"
+    difficulty: "medium"
+    question: "2025 年 Q4 华北区域的项目成本是多少？"
+    expected:
+      type: "scalar"
+      value: 69753000
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:project_cost"
+      - "table:cost"
+
+  - id: "S-03"
+    category: "T1"
+    split: "sealed"
+    difficulty: "medium"
+    question: "2025 年 Q2 新签合同额是多少？"
+    expected:
+      type: "scalar"
+      value: 145584000
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:contract_amount"
+      - "table:contract"
+
+  - id: "S-04"
+    category: "T1"
+    split: "sealed"
+    difficulty: "easy"
+    question: "P-118 在 2025 年 Q3 的确认收入是多少？"
+    expected:
+      type: "scalar"
+      value: 4261000
+      unit: "元"
+      tolerance: 0.005
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+
+  - id: "S-05"
+    category: "T2"
+    split: "sealed"
+    difficulty: "medium"
+    question: "2025 年 Q4 毛利率最低的 4 个项目是哪些？"
+    expected:
+      type: "table"
+      columns: ["project_code", "project_name", "gross_margin"]
+      order: "按毛利率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-119', '锦泰学校新建', -0.0644]
+        - ['P-121', '长兴智造园一期', -0.0435]
+        - ['P-106', '长兴医院改扩建', 0.054]
+        - ['P-124', '鼎盛数据中心二期', 0.0846]
+    must_cite:
+      - "metric:gross_margin"
+      - "table:revenue"
+      - "table:cost"
+
+  - id: "S-06"
+    category: "T2"
+    split: "sealed"
+    difficulty: "medium"
+    question: "2025 年 Q3 确认收入最高的 3 个项目是哪些？"
+    expected:
+      type: "table"
+      columns: ["project_code", "project_name", "revenue"]
+      order: "按收入降序"
+      tolerance: 0.005
+      rows:
+        - ['P-129', '中科学校新建', 19298600]
+        - ['P-121', '长兴智造园一期', 15914900]
+        - ['P-123', '启元研发中心', 15894300]
+    must_cite:
+      - "metric:recognized_revenue"
+      - "table:revenue"
+
+  - id: "S-07"
+    category: "T2"
+    split: "sealed"
+    difficulty: "hard"
+    question: "2025 年全年回款率最低的 2 个项目是哪些？"
+    expected:
+      type: "table"
+      columns: ["project_code", "project_name", "collection_rate"]
+      order: "按回款率升序"
+      tolerance: 0.001
+      rows:
+        - ['P-105', '恒越变电站', 0.5555]
+        - ['P-116', '滨江医院改扩建', 0.5583]
+    must_cite:
+      - "metric:collection_rate"
+      - "table:revenue"
+
+  - id: "S-08"
+    category: "T2"
+    split: "sealed"
+    difficulty: "hard"
+    question: "2025 年 Q4 人均产值最低的 2 个区域是哪些？"
+    expected:
+      type: "table"
+      columns: ["region_name", "revenue_per_head"]
+      order: "按人均产值升序"
+      tolerance: 0.01
+      rows:
+        - ['华东', 1123879.52]
+        - ['华南', 1533571.53]
+    must_cite:
+      - "metric:revenue_per_head"
+      - "table:headcount"
